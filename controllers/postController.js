@@ -1,18 +1,17 @@
-
-let posts = [
-    {id: 1, title: 'First post'},
-    {id: 2, title: 'Second post'},
-    {id: 3, title: 'Third post'},
-];
+import { query } from '../services/db.js';
 
 /**
  * Get all posts
  * @route /api/posts
  */
-export const getPosts = (req, res, next) => {
+export const getPosts = async (req, res, next) => {
     const limit = parseInt(req.query.limit);
+    const posts = await query(`SELECT id, title FROM posts`);
+
     if (!isNaN(limit) && limit > 0) {
-        const posts_with_limit = posts.slice(0, limit);
+        const posts_with_limit = await query(
+            `SELECT id, title FROM posts limit ${limit}`
+        );
         return res
             .status(200)
             .json(posts_with_limit);
@@ -25,9 +24,9 @@ export const getPosts = (req, res, next) => {
  * Get a single post
  * @route /api/posts/:id
  */
-export const getPost = (req, res, next) => {
+export const getPost = async (req, res, next) => {
     const id = parseInt(req.params.id);
-    const post = posts.filter((post) => post.id === id);
+    const post = await query(`SELECT * from posts WHERE id=${id}`);
 
     if(post.length === 0) {
         const error = new Error(`Post with id ${id} not found`);
@@ -41,19 +40,27 @@ export const getPost = (req, res, next) => {
  * Create a single post
  * @route /api/posts/:id
  */
-export const createPost = (req, res, next) => {
-    const newPost = {
-        id: posts.length + 1,
-        title: req.body.title
-    };
+export const createPost = async (req, res, next) => {
+    const title = req.body.title;
 
-    if(!newPost.title) {
+    if(!title) {
         const error = new Error('Please include title');
         error.status = 400;
         return next(error);
     }
-    posts.push(newPost);
-    res.status(201).json(posts);
+    
+    const result = await query(
+        `INSERT INTO posts
+        (title)
+        VALUES ('${title}')`
+    );
+    
+    let message = 'Error while creating post';
+    if(result.affectedRows) {
+        message = 'Post successfully created';
+    }
+
+    res.status(201).json({message});
 };
 
 /**
@@ -61,9 +68,9 @@ export const createPost = (req, res, next) => {
  * @route /api/posts/:id
  */
 
-export const updatePost = (req, res, next) => {
+export const updatePost = async (req, res, next) => {
     const id = parseInt(req.params.id);
-    const post = posts.find((post) => id === post.id);
+    const post = await query(`SELECT * from posts WHERE id=${id}`);
 
     if(!post) {
         const error = new Error(`Post id ${id} not found`);
@@ -78,17 +85,25 @@ export const updatePost = (req, res, next) => {
         return next(error);
     }
 
-    post.title = title;
-    res.status(201).json(posts);
+    const result = await query(
+        `UPDATE posts
+        set title = '${title}'
+        WHERE id = ${id}`
+    );
+
+    if(result.affectedRows) {
+        return res.status(201).json({message: 'Post successfully updated'});
+    }
+    return res.status(404).json({message: 'Could not update post'});
 };
 
 /**
  * Delete a single post
  * @route /api/posts/:id
  */
-export const deletePost = (req, res, next) => {
+export const deletePost = async (req, res, next) => {
     const id = parseInt(req.params.id);
-    const post = posts.find((post) => id === post.id);
+    const post = await query(`SELECT * from posts WHERE id=${id}`);;
 
     if(!post) {
         const error = new Error(`Post id ${id} not found`);
@@ -96,10 +111,11 @@ export const deletePost = (req, res, next) => {
         return next(error);
     }
 
-    const updated_posts = posts.filter((post) => id !== post.id);
-    posts = updated_posts;
-
-    return res.status(201).json(posts);
+    const result = await query(`DELETE from posts where id=${id}`);;
+    if(result.affectedRows) {
+        return res.status(201).json({message: 'Post successfully deleted'});
+    }
+    return res.status(500).json({message: 'Could not delete post'});
 };
 
 
