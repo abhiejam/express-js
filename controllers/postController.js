@@ -5,7 +5,6 @@ import prisma from '../prisma-client.js';
  */
 export const getPosts = async (req, res, next) => {
     const limit = parseInt(req.query.limit);
-    const posts = await prisma.post.findMany();
 
     if (!isNaN(limit) && limit > 0) {
         const posts_with_limit = await prisma.post.findMany({
@@ -16,6 +15,7 @@ export const getPosts = async (req, res, next) => {
             .json(posts_with_limit);
     }
     
+    const posts = await prisma.post.findMany();
     res.status(200).json(posts);
 };
 
@@ -25,6 +25,7 @@ export const getPosts = async (req, res, next) => {
  */
 export const getPost = async (req, res, next) => {
     const id = parseInt(req.params.id);
+
     const post = await prisma.post.findUnique({
         where: {
             id: id
