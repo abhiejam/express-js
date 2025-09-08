@@ -1,22 +1,21 @@
-import { query } from '../services/db.js';
-
+import prisma from '../prisma-client.js';
 /**
  * Get all posts
  * @route /api/posts
  */
 export const getPosts = async (req, res, next) => {
     const limit = parseInt(req.query.limit);
-    const posts = await query(`SELECT id, title FROM posts`);
 
     if (!isNaN(limit) && limit > 0) {
-        const posts_with_limit = await query(
-            `SELECT id, title FROM posts limit ${limit}`
-        );
+        const posts_with_limit = await prisma.post.findMany({
+            take: limit
+        });
         return res
             .status(200)
             .json(posts_with_limit);
     }
     
+    const posts = await prisma.post.findMany();
     res.status(200).json(posts);
 };
 
@@ -26,9 +25,14 @@ export const getPosts = async (req, res, next) => {
  */
 export const getPost = async (req, res, next) => {
     const id = parseInt(req.params.id);
-    const post = await query(`SELECT * from posts WHERE id=${id}`);
 
-    if(post.length === 0) {
+    const post = await prisma.post.findUnique({
+        where: {
+            id: id
+        }
+    });
+
+    if(!post) {
         const error = new Error(`Post with id ${id} not found`);
         error.status = 404;
         return next(error);  
@@ -49,14 +53,14 @@ export const createPost = async (req, res, next) => {
         return next(error);
     }
     
-    const result = await query(
-        `INSERT INTO posts
-        (title)
-        VALUES ('${title}')`
-    );
+    const result = await prisma.post.create({
+        data: {
+            title: title
+        }
+    });
     
     let message = 'Error while creating post';
-    if(result.affectedRows) {
+    if(result) {
         message = 'Post successfully created';
     }
 
@@ -70,7 +74,11 @@ export const createPost = async (req, res, next) => {
 
 export const updatePost = async (req, res, next) => {
     const id = parseInt(req.params.id);
-    const post = await query(`SELECT * from posts WHERE id=${id}`);
+    const post = await prisma.post.findUnique({
+        where: {
+            id: id
+        }
+    });
 
     if(!post) {
         const error = new Error(`Post id ${id} not found`);
@@ -85,13 +93,16 @@ export const updatePost = async (req, res, next) => {
         return next(error);
     }
 
-    const result = await query(
-        `UPDATE posts
-        set title = '${title}'
-        WHERE id = ${id}`
-    );
+    const result = await prisma.post.update({
+        where: {
+            id: id
+        },
+        data: {
+            title: title
+        }
+    });
 
-    if(result.affectedRows) {
+    if(result) {
         return res.status(201).json({message: 'Post successfully updated'});
     }
     return res.status(404).json({message: 'Could not update post'});
@@ -103,7 +114,11 @@ export const updatePost = async (req, res, next) => {
  */
 export const deletePost = async (req, res, next) => {
     const id = parseInt(req.params.id);
-    const post = await query(`SELECT * from posts WHERE id=${id}`);;
+    const post = await prisma.post.findUnique({
+        where: {
+            id: id
+        }
+    });
 
     if(!post) {
         const error = new Error(`Post id ${id} not found`);
@@ -111,8 +126,12 @@ export const deletePost = async (req, res, next) => {
         return next(error);
     }
 
-    const result = await query(`DELETE from posts where id=${id}`);;
-    if(result.affectedRows) {
+    const result = await prisma.post.delete({
+        where: {
+            id: id
+        }
+    });
+    if(result) {
         return res.status(201).json({message: 'Post successfully deleted'});
     }
     return res.status(500).json({message: 'Could not delete post'});
