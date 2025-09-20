@@ -1,4 +1,5 @@
 import prisma from '../prisma-client.js';
+import AppError from '../errors/AppError.js';
 /**
  * Get all posts
  * @route /api/posts
@@ -33,9 +34,7 @@ export const getPost = async (req, res, next) => {
     });
 
     if(!post) {
-        const error = new Error(`Post with id ${id} not found`);
-        error.status = 404;
-        return next(error);  
+        return next(new AppError(`Post with id ${id} not found`, 404));
     }
     res.status(200).json(post);
 };
@@ -48,9 +47,7 @@ export const createPost = async (req, res, next) => {
     const title = req.body.title;
 
     if(!title) {
-        const error = new Error('Please include title');
-        error.status = 400;
-        return next(error);
+        return next(new AppError('Please include title', 400));
     }
     
     const result = await prisma.post.create({
@@ -81,16 +78,12 @@ export const updatePost = async (req, res, next) => {
     });
 
     if(!post) {
-        const error = new Error(`Post id ${id} not found`);
-        error.status = 404;
-        return next(error);
+        return next(new AppError(`Post id ${id} not found`, 404));
     }
 
     const title = req.body.title;
     if(!title) {
-        const error = new Error(`Please include title`);
-        error.status = 400;
-        return next(error);
+        return next(new AppError(`Please include title`, 400));
     }
 
     const result = await prisma.post.update({
@@ -121,9 +114,7 @@ export const deletePost = async (req, res, next) => {
     });
 
     if(!post) {
-        const error = new Error(`Post id ${id} not found`);
-        error.status = 404;
-        return next(error);
+        return next(new AppError(`Post id ${id} not found`, 404));
     }
 
     const result = await prisma.post.delete({

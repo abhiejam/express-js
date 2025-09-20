@@ -1,7 +1,7 @@
 import express from 'express';
 import posts from './routes/posts.js'; // Need .js extension for local imports
 import logger from './middleware/logger.js';
-import errorHandler from './middleware/error.js';
+import errorHandler from './middleware/errorHandler.js';
 import notFound from './middleware/notFound.js';
 import { fileURLToPath } from 'url';
 import path from 'path';

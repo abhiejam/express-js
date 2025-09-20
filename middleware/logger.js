@@ -1,5 +1,8 @@
 import colors from 'colors';
 
+/**
+ * Middleware to log requests and responses
+ */
 const logger = (req, res, next) => {
     const methodColors = {
         POST: 'blue',
