@@ -1,5 +1,6 @@
 import express from 'express';
 import posts from './routes/posts.js'; // Need .js extension for local imports
+import users from './routes/users.js';
 import logger from './middleware/logger.js';
 import errorHandler from './middleware/errorHandler.js';
 import notFound from './middleware/notFound.js';
@@ -24,6 +25,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Routes
 app.use('/api/posts', posts);
+app.use('/api/users', users);
 
 // Error handler - Must be below posts
 app.use(notFound);
